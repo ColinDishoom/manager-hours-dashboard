@@ -37,16 +37,63 @@
             margin: 0 auto;
         }
 
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
         h1 {
             font-size: 28px;
             font-weight: 700;
-            margin-bottom: 8px;
         }
 
-        .week-label {
-            color: var(--gray-700);
-            margin-bottom: 24px;
+        .week-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
             font-size: 14px;
+            background: white;
+            cursor: pointer;
+            min-width: 250px;
+        }
+
+        select:hover {
+            border-color: var(--gray-300);
+        }
+
+        .week-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-200);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-300);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .loading {
@@ -203,12 +250,6 @@
             color: var(--gray-900);
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--gray-700);
-        }
-
         .last-updated {
             font-size: 12px;
             color: var(--gray-700);
@@ -219,8 +260,20 @@
 </head>
 <body>
     <div class="container">
-        <h1>📊 Manager Hours Dashboard</h1>
-        <div class="week-label" id="weekLabel">Loading data...</div>
+        <div class="header">
+            <h1>📊 Manager Hours Dashboard</h1>
+            <div class="week-selector">
+                <label for="weekSelect" style="font-weight: 500;">Select Week:</label>
+                <select id="weekSelect">
+                    <option>Loading weeks...</option>
+                </select>
+                <div class="week-nav">
+                    <button id="prevBtn" onclick="previousWeek()" title="Previous week">← Prev</button>
+                    <button id="nextBtn" onclick="nextWeek()" title="Next week">Next →</button>
+                </div>
+            </div>
+        </div>
+
         <div id="loadingMessage" class="loading">Loading dashboard...</div>
 
         <div id="dashboard" style="display: none;">
@@ -302,41 +355,83 @@
 
     <script>
         let bandChart, siteChart;
-        let dashboardData = null;
+        let allWeeksData = null;
+        let currentWeekIndex = -1;
 
         async function loadDashboard() {
             try {
-                // Load data from data.json
-                const response = await fetch('data.json');
+                const response = await fetch('data-multi-week.json');
                 if (!response.ok) {
-                    throw new Error('Failed to load data.json');
+                    throw new Error('Failed to load data');
                 }
-                dashboardData = await response.json();
-                initializeDashboard();
+                allWeeksData = await response.json();
+
+                // Populate week selector
+                const select = document.getElementById('weekSelect');
+                select.innerHTML = '';
+                allWeeksData.weeks.forEach((week, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = week.week;
+                    select.appendChild(option);
+                });
+
+                // Set to latest week
+                currentWeekIndex = allWeeksData.weeks.length - 1;
+                select.value = currentWeekIndex;
+                select.addEventListener('change', (e) => {
+                    currentWeekIndex = parseInt(e.target.value);
+                    updateDashboard();
+                });
+
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                updateDashboard();
+
             } catch (error) {
                 document.getElementById('loadingMessage').innerHTML = `
                     <div class="alert">
-                        ⚠️ Could not load dashboard data. Make sure <strong>data.json</strong> is in the same directory as this file.
+                        ⚠️ Could not load dashboard data. Make sure <strong>data-multi-week.json</strong> is in the same directory.
                     </div>
                 `;
-                console.error('Error loading dashboard:', error);
+                console.error('Error:', error);
             }
         }
 
-        function initializeDashboard() {
-            document.getElementById('loadingMessage').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            updateMetrics();
-            updateTables();
-            createCharts();
-            showAlerts();
+        function previousWeek() {
+            if (currentWeekIndex > 0) {
+                currentWeekIndex--;
+                document.getElementById('weekSelect').value = currentWeekIndex;
+                updateDashboard();
+            }
         }
 
-        function updateMetrics() {
-            const summary = dashboardData.summary;
+        function nextWeek() {
+            if (currentWeekIndex < allWeeksData.weeks.length - 1) {
+                currentWeekIndex++;
+                document.getElementById('weekSelect').value = currentWeekIndex;
+                updateDashboard();
+            }
+        }
+
+        function updateDashboard() {
+            const weekData = allWeeksData.weeks[currentWeekIndex];
+            updateMetrics(weekData);
+            updateTables(weekData);
+            createCharts(weekData);
+            showAlerts(weekData);
+            updateNavButtons();
+        }
+
+        function updateNavButtons() {
+            document.getElementById('prevBtn').disabled = currentWeekIndex === 0;
+            document.getElementById('nextBtn').disabled = currentWeekIndex === allWeeksData.weeks.length - 1;
+        }
+
+        function updateMetrics(weekData) {
+            const summary = weekData.summary;
             const total = summary.total_managers;
 
-            document.getElementById('weekLabel').textContent = `Week: ${dashboardData.week}`;
             document.getElementById('totalManagers').textContent = total;
             document.getElementById('below45').textContent = summary.below_45_count;
             document.getElementById('below45Pct').textContent = `${((summary.below_45_count / total) * 100).toFixed(1)}%`;
@@ -346,10 +441,9 @@
             document.getElementById('over48Pct').textContent = `${((summary.over_48_count / total) * 100).toFixed(1)}%`;
         }
 
-        function updateTables() {
-            // Site table
+        function updateTables(weekData) {
             const siteBody = document.getElementById('siteTableBody');
-            siteBody.innerHTML = dashboardData.site_data.map(site => `
+            siteBody.innerHTML = weekData.site_data.map(site => `
                 <tr>
                     <td class="site-name">${site['Site (attribution)']}</td>
                     <td style="text-align: center; font-weight: 600;">${site.Total_Managers}</td>
@@ -362,12 +456,11 @@
                 </tr>
             `).join('');
 
-            // Over 48 table
             const over48Body = document.getElementById('over48TableBody');
-            if (dashboardData.over_48_data.length === 0) {
-                over48Body.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--gray-700);">No managers working over 48 hours this week</td></tr>';
+            if (weekData.over_48_data.length === 0) {
+                over48Body.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--gray-700);">No managers working over 48 hours</td></tr>';
             } else {
-                over48Body.innerHTML = dashboardData.over_48_data.map(manager => `
+                over48Body.innerHTML = weekData.over_48_data.map(manager => `
                     <tr>
                         <td>${manager['First name']} ${manager['Last name']}</td>
                         <td>${manager['Site (attribution)']}</td>
@@ -377,15 +470,13 @@
                 `).join('');
             }
 
-            // Last updated
             const now = new Date().toLocaleString('en-GB');
             document.getElementById('lastUpdated').textContent = `Last updated: ${now}`;
         }
 
-        function createCharts() {
-            const summary = dashboardData.summary;
+        function createCharts(weekData) {
+            const summary = weekData.summary;
 
-            // Band chart
             const bandCtx = document.getElementById('bandChart').getContext('2d');
             if (bandChart) bandChart.destroy();
             bandChart = new Chart(bandCtx, {
@@ -393,11 +484,7 @@
                 data: {
                     labels: ['Below 45h', '45-48h', 'Over 48h'],
                     datasets: [{
-                        data: [
-                            summary.below_45_count,
-                            summary.between_45_48_count,
-                            summary.over_48_count
-                        ],
+                        data: [summary.below_45_count, summary.between_45_48_count, summary.over_48_count],
                         backgroundColor: ['#16a34a', '#f59e0b', '#dc2626'],
                         borderColor: 'white',
                         borderWidth: 2
@@ -415,8 +502,7 @@
                 }
             });
 
-            // Site chart (top 10)
-            const topSites = dashboardData.site_data
+            const topSites = weekData.site_data
                 .sort((a, b) => b['Over 48'] - a['Over 48'] || b.Avg_Hours - a.Avg_Hours)
                 .slice(0, 10);
 
@@ -451,19 +537,19 @@
             });
         }
 
-        function showAlerts() {
+        function showAlerts(weekData) {
             const container = document.getElementById('alertContainer');
             const alerts = [];
 
-            if (dashboardData.summary.over_48_count > 0) {
+            if (weekData.summary.over_48_count > 0) {
                 alerts.push(`
                     <div class="alert">
-                        ⚠️ <strong>${dashboardData.summary.over_48_count} manager(s)</strong> are working over 48 hours this week. Review the table below.
+                        ⚠️ <strong>${weekData.summary.over_48_count} manager(s)</strong> working over 48 hours. Review below.
                     </div>
                 `);
             }
 
-            const highAvgSites = dashboardData.site_data.filter(s => s.Avg_Hours > 46);
+            const highAvgSites = weekData.site_data.filter(s => s.Avg_Hours > 46);
             if (highAvgSites.length > 0) {
                 alerts.push(`
                     <div class="alert">
@@ -475,7 +561,6 @@
             container.innerHTML = alerts.join('');
         }
 
-        // Load data on page load
         document.addEventListener('DOMContentLoaded', loadDashboard);
     </script>
 </body>
