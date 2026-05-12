@@ -1,0 +1,38 @@
+{
+  "week": "20th April - 26th April",
+  "summary": {
+    "total_managers": 145,
+    "below_45_count": 123,
+    "between_45_48_count": 16,
+    "over_48_count": 6,
+    "avg_hours_overall": 41.54,
+    "max_hours": 54.35
+  },
+  "site_data": [
+    {"Site (attribution)": "Battersea", "Total_Managers": 9, "Avg_Hours": 42.10, "Below 45": 8, "45-48": 1, "Over 48": 0},
+    {"Site (attribution)": "Birmingham", "Total_Managers": 8, "Avg_Hours": 40.81, "Below 45": 8, "45-48": 0, "Over 48": 0},
+    {"Site (attribution)": "Brighton Permit Room", "Total_Managers": 6, "Avg_Hours": 42.15, "Below 45": 5, "45-48": 1, "Over 48": 0},
+    {"Site (attribution)": "Cambridge Permit Room", "Total_Managers": 5, "Avg_Hours": 43.55, "Below 45": 3, "45-48": 2, "Over 48": 0},
+    {"Site (attribution)": "Canary Wharf", "Total_Managers": 11, "Avg_Hours": 38.20, "Below 45": 9, "45-48": 2, "Over 48": 0},
+    {"Site (attribution)": "Carnaby", "Total_Managers": 12, "Avg_Hours": 41.35, "Below 45": 11, "45-48": 1, "Over 48": 0},
+    {"Site (attribution)": "Covent Garden", "Total_Managers": 17, "Avg_Hours": 40.51, "Below 45": 17, "45-48": 0, "Over 48": 0},
+    {"Site (attribution)": "Edinburgh", "Total_Managers": 11, "Avg_Hours": 41.34, "Below 45": 11, "45-48": 0, "Over 48": 0},
+    {"Site (attribution)": "Glasgow", "Total_Managers": 8, "Avg_Hours": 42.78, "Below 45": 7, "45-48": 0, "Over 48": 1},
+    {"Site (attribution)": "Kensington", "Total_Managers": 9, "Avg_Hours": 36.73, "Below 45": 8, "45-48": 1, "Over 48": 0},
+    {"Site (attribution)": "Kings Cross", "Total_Managers": 12, "Avg_Hours": 42.57, "Below 45": 12, "45-48": 0, "Over 48": 0},
+    {"Site (attribution)": "Liverpool Permit Room", "Total_Managers": 7, "Avg_Hours": 40.83, "Below 45": 2, "45-48": 1, "Over 48": 4},
+    {"Site (attribution)": "Manchester", "Total_Managers": 8, "Avg_Hours": 42.32, "Below 45": 7, "45-48": 1, "Over 48": 0},
+    {"Site (attribution)": "Oxford Permit Room", "Total_Managers": 5, "Avg_Hours": 47.03, "Below 45": 2, "45-48": 2, "Over 48": 1},
+    {"Site (attribution)": "Portobello Permit Room", "Total_Managers": 6, "Avg_Hours": 44.17, "Below 45": 6, "45-48": 0, "Over 48": 0},
+    {"Site (attribution)": "Shoreditch", "Total_Managers": 10, "Avg_Hours": 43.32, "Below 45": 7, "45-48": 3, "Over 48": 0},
+    {"Site (attribution)": "The Bakery", "Total_Managers": 1, "Avg_Hours": 45.79, "Below 45": 0, "45-48": 1, "Over 48": 0}
+  ],
+  "over_48_data": [
+    {"First name": "Prajay", "Last name": "Anchan", "Site (attribution)": "Oxford Permit Room", "Job role": "Assistant General Manager", "Total_Hours": 54.35},
+    {"First name": "Thomas", "Last name": "Dolby", "Site (attribution)": "Liverpool Permit Room", "Job role": "General Manager", "Total_Hours": 53.35},
+    {"First name": "Daniel", "Last name": "Sinnott-Davies", "Site (attribution)": "Liverpool Permit Room", "Job role": "Floor Manager", "Total_Hours": 50.07},
+    {"First name": "Sian", "Last name": "Dawson", "Site (attribution)": "Liverpool Permit Room", "Job role": "Assistant General Manager", "Total_Hours": 48.68},
+    {"First name": "Michael", "Last name": "Ferguson", "Site (attribution)": "Liverpool Permit Room", "Job role": "Floor Manager", "Total_Hours": 48.58},
+    {"First name": "Shaun", "Last name": "Metcalfe", "Site (attribution)": "Glasgow", "Job role": "General Manager", "Total_Hours": 48.35}
+  ]
+}

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Hours Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            color-scheme: light;
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --success: #16a34a;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .week-label {
+            color: var(--gray-700);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-700);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card h3 {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-700);
+            margin-bottom: 12px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .metric-subtext {
+            font-size: 12px;
+            color: var(--gray-700);
+        }
+
+        .below-45 { color: var(--success); }
+        .between-45-48 { color: var(--warning); }
+        .over-48 { color: var(--danger); }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--gray-900);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .table-container h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--gray-900);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: var(--gray-100);
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+
+        .alert {
+            background: #fef2f2;
+            border-left: 4px solid var(--danger);
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: var(--danger);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+        .hours-value {
+            font-weight: 600;
+        }
+
+        .site-name {
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-700);
+        }
+
+        .last-updated {
+            font-size: 12px;
+            color: var(--gray-700);
+            margin-top: 12px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Manager Hours Dashboard</h1>
+        <div class="week-label" id="weekLabel">Loading data...</div>
+        <div id="loadingMessage" class="loading">Loading dashboard...</div>
+
+        <div id="dashboard" style="display: none;">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Total Managers</h3>
+                    <div class="metric-value" id="totalManagers">-</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Below 45 Hours</h3>
+                    <div class="metric-value below-45" id="below45">-</div>
+                    <div class="metric-subtext" id="below45Pct">-</div>
+                </div>
+                <div class="metric-card">
+                    <h3>45-48 Hours</h3>
+                    <div class="metric-value between-45-48" id="between4548">-</div>
+                    <div class="metric-subtext" id="between4548Pct">-</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Over 48 Hours</h3>
+                    <div class="metric-value over-48" id="over48">-</div>
+                    <div class="metric-subtext" id="over48Pct">-</div>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h2>Distribution by Hours Band</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="bandChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h2>Average Hours by Site</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="siteChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h2>Manager Distribution by Site</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Site</th>
+                            <th style="text-align: center;">Total</th>
+                            <th style="text-align: center;">Below 45h</th>
+                            <th style="text-align: center;">45-48h</th>
+                            <th style="text-align: center;">Over 48h</th>
+                            <th>Avg Hours</th>
+                        </tr>
+                    </thead>
+                    <tbody id="siteTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-container" style="margin-top: 24px;">
+                <h2>⚠️ Managers Working Over 48 Hours</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Site</th>
+                            <th>Role</th>
+                            <th>Hours</th>
+                        </tr>
+                    </thead>
+                    <tbody id="over48TableBody">
+                    </tbody>
+                </table>
+                <div class="last-updated" id="lastUpdated"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bandChart, siteChart;
+        let dashboardData = null;
+
+        async function loadDashboard() {
+            try {
+                // Load data from data.json
+                const response = await fetch('data.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load data.json');
+                }
+                dashboardData = await response.json();
+                initializeDashboard();
+            } catch (error) {
+                document.getElementById('loadingMessage').innerHTML = `
+                    <div class="alert">
+                        ⚠️ Could not load dashboard data. Make sure <strong>data.json</strong> is in the same directory as this file.
+                    </div>
+                `;
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        function initializeDashboard() {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            updateMetrics();
+            updateTables();
+            createCharts();
+            showAlerts();
+        }
+
+        function updateMetrics() {
+            const summary = dashboardData.summary;
+            const total = summary.total_managers;
+
+            document.getElementById('weekLabel').textContent = `Week: ${dashboardData.week}`;
+            document.getElementById('totalManagers').textContent = total;
+            document.getElementById('below45').textContent = summary.below_45_count;
+            document.getElementById('below45Pct').textContent = `${((summary.below_45_count / total) * 100).toFixed(1)}%`;
+            document.getElementById('between4548').textContent = summary.between_45_48_count;
+            document.getElementById('between4548Pct').textContent = `${((summary.between_45_48_count / total) * 100).toFixed(1)}%`;
+            document.getElementById('over48').textContent = summary.over_48_count;
+            document.getElementById('over48Pct').textContent = `${((summary.over_48_count / total) * 100).toFixed(1)}%`;
+        }
+
+        function updateTables() {
+            // Site table
+            const siteBody = document.getElementById('siteTableBody');
+            siteBody.innerHTML = dashboardData.site_data.map(site => `
+                <tr>
+                    <td class="site-name">${site['Site (attribution)']}</td>
+                    <td style="text-align: center; font-weight: 600;">${site.Total_Managers}</td>
+                    <td style="text-align: center; color: var(--success);">${site['Below 45']}</td>
+                    <td style="text-align: center; color: #b45309;">${site['45-48']}</td>
+                    <td style="text-align: center;">
+                        ${site['Over 48'] > 0 ? `<span class="badge badge-danger">${site['Over 48']}</span>` : '-'}
+                    </td>
+                    <td class="hours-value">${site.Avg_Hours.toFixed(1)}h</td>
+                </tr>
+            `).join('');
+
+            // Over 48 table
+            const over48Body = document.getElementById('over48TableBody');
+            if (dashboardData.over_48_data.length === 0) {
+                over48Body.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--gray-700);">No managers working over 48 hours this week</td></tr>';
+            } else {
+                over48Body.innerHTML = dashboardData.over_48_data.map(manager => `
+                    <tr>
+                        <td>${manager['First name']} ${manager['Last name']}</td>
+                        <td>${manager['Site (attribution)']}</td>
+                        <td>${manager['Job role']}</td>
+                        <td><span class="badge badge-danger">${manager.Total_Hours.toFixed(2)}h</span></td>
+                    </tr>
+                `).join('');
+            }
+
+            // Last updated
+            const now = new Date().toLocaleString('en-GB');
+            document.getElementById('lastUpdated').textContent = `Last updated: ${now}`;
+        }
+
+        function createCharts() {
+            const summary = dashboardData.summary;
+
+            // Band chart
+            const bandCtx = document.getElementById('bandChart').getContext('2d');
+            if (bandChart) bandChart.destroy();
+            bandChart = new Chart(bandCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Below 45h', '45-48h', 'Over 48h'],
+                    datasets: [{
+                        data: [
+                            summary.below_45_count,
+                            summary.between_45_48_count,
+                            summary.over_48_count
+                        ],
+                        backgroundColor: ['#16a34a', '#f59e0b', '#dc2626'],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 16, font: { size: 12 } }
+                        }
+                    }
+                }
+            });
+
+            // Site chart (top 10)
+            const topSites = dashboardData.site_data
+                .sort((a, b) => b['Over 48'] - a['Over 48'] || b.Avg_Hours - a.Avg_Hours)
+                .slice(0, 10);
+
+            const siteCtx = document.getElementById('siteChart').getContext('2d');
+            if (siteChart) siteChart.destroy();
+            siteChart = new Chart(siteCtx, {
+                type: 'bar',
+                data: {
+                    labels: topSites.map(s => s['Site (attribution)'].substring(0, 12)),
+                    datasets: [{
+                        label: 'Avg Hours',
+                        data: topSites.map(s => s.Avg_Hours),
+                        backgroundColor: topSites.map(s => {
+                            if (s.Avg_Hours > 48) return '#dc2626';
+                            if (s.Avg_Hours > 45) return '#f59e0b';
+                            return '#2563eb';
+                        }),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, max: 56 }
+                    }
+                }
+            });
+        }
+
+        function showAlerts() {
+            const container = document.getElementById('alertContainer');
+            const alerts = [];
+
+            if (dashboardData.summary.over_48_count > 0) {
+                alerts.push(`
+                    <div class="alert">
+                        ⚠️ <strong>${dashboardData.summary.over_48_count} manager(s)</strong> are working over 48 hours this week. Review the table below.
+                    </div>
+                `);
+            }
+
+            const highAvgSites = dashboardData.site_data.filter(s => s.Avg_Hours > 46);
+            if (highAvgSites.length > 0) {
+                alerts.push(`
+                    <div class="alert">
+                        📈 <strong>${highAvgSites.map(s => s['Site (attribution)']).join(', ')}</strong> have average hours above 46h.
+                    </div>
+                `);
+            }
+
+            container.innerHTML = alerts.join('');
+        }
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>
